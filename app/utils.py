@@ -2,7 +2,6 @@ import re
 from datetime import datetime
 
 
-# Валидация поля и определение его типа
 def identify_field_type(value):
 
     DATE_FORMATS = ("%d.%m.%Y", "%Y-%m-%d")

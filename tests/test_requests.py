@@ -67,7 +67,6 @@ test_requests = [
 ]
 
 
-# Асинхронная функция для отправки запросов
 async def send_requests():
     async with aiohttp.ClientSession() as session:
         for i, params in enumerate(test_requests, 1):
