@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request
-from app.utils import identify_field_type
-from app.db import get_all
+from utils import identify_field_type
+from db import get_all
 
 router = APIRouter()
 

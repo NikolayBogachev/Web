@@ -2,7 +2,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.routing import APIRouter
 
-from app.handler import router
+from handler import router
 
 
 app = FastAPI(title="Web")
