@@ -1,7 +1,9 @@
+import os
 from tinydb import TinyDB
 
-
-db = TinyDB("app/templates.json")
+# Используем абсолютный путь относительно текущего каталога приложения
+db_path = os.path.join(os.path.dirname(__file__), "templates.json")
+db = TinyDB(db_path)
 
 
 def get_db():
