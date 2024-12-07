@@ -1,7 +1,7 @@
 import re
 from datetime import datetime
 
-from app.db import get_all
+from db import get_all
 
 DATE_FORMATS = ("%d.%m.%Y", "%Y-%m-%d")
 
