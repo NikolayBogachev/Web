@@ -1,8 +1,5 @@
 import pytest
-from fastapi import Request
-from httpx import QueryParams
 
-from app.db import get_all
 from app.utils import find_best_matching_template
 
 
