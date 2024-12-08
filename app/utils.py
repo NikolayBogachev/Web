@@ -33,16 +33,16 @@ def identify_field_type(value) -> Literal["date", "phone", "email", "text"]:
     return "text"
 
 
-async def find_best_matching_template(request) -> Optional[Dict[str, Any]]:
+async def find_best_matching_template(data) -> Optional[Dict[str, Any]]:
     """
         Находит шаблон, который наиболее соответствует параметрам запроса.
 
-        :param request: Объект запроса FastAPI
+        :param data:
         :return: Шаблон, соответствующий запросу, или None, если подходящий шаблон не найден
     """
 
     # Преобразуем параметры запроса в множество с форматированием "поле:тип"
-    params_set = {f"{key}:{identify_field_type(value)}" for key, value in request.query_params.items()}
+    params_set = {f"{key}:{identify_field_type(value)}" for key, value in data}
     templates = get_all()
 
     matched_template = None

@@ -13,7 +13,7 @@ async def get_form(request: Request):
         :return: Словарь с именем шаблона, если найден, или словарь с определенными типами для каждого параметра.
     """
 
-    matched_template = await find_best_matching_template(request)
+    matched_template = await find_best_matching_template(request.query_params.items())
 
     if matched_template:
         return {"template_name": matched_template["name"]}
