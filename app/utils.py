@@ -1,12 +1,18 @@
 import re
 from datetime import datetime
-
-from db import get_all
+from typing import Optional, Dict, Any, Literal
+from app.db import get_all
 
 DATE_FORMATS = ("%d.%m.%Y", "%Y-%m-%d")
 
 
-def identify_field_type(value):
+def identify_field_type(value) -> Literal["date", "phone", "email", "text"]:
+    """
+        Определяет тип переданного значения.
+
+        :param value: Строка для анализа
+        :return: Один из типов: "date", "phone", "email" или "text"
+    """
 
     # Проверка даты (формат DD.MM.YYYY или YYYY-MM-DD)
     for date_format in DATE_FORMATS:
@@ -27,7 +33,16 @@ def identify_field_type(value):
     return "text"
 
 
-async def find_best_matching_template(params_set):
+async def find_best_matching_template(request) -> Optional[Dict[str, Any]]:
+    """
+        Находит шаблон, который наиболее соответствует параметрам запроса.
+
+        :param request: Объект запроса FastAPI
+        :return: Шаблон, соответствующий запросу, или None, если подходящий шаблон не найден
+    """
+
+    # Преобразуем параметры запроса в множество с форматированием "поле:тип"
+    params_set = {f"{key}:{identify_field_type(value)}" for key, value in request.query_params.items()}
     templates = get_all()
 
     matched_template = None

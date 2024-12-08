@@ -1,8 +1,6 @@
 import aiohttp
 import asyncio
-
-
-base_url = "http://localhost:8000/get_form"
+import argparse
 
 # Список тестовых данных
 test_requests = [
@@ -67,14 +65,29 @@ test_requests = [
 ]
 
 
-async def send_requests():
+async def send_requests(base_url):
     async with aiohttp.ClientSession() as session:
         for i, params in enumerate(test_requests, 1):
             print(f"Sending request {i}: {params}")
             async with session.post(base_url, params=params) as response:
-                response_data = await response.json()
-                print(f"Response {i}: {response_data}")
+                try:
+                    response_data = await response.json()
+                    print(f"Response {i}: {response_data}")
+                except aiohttp.ContentTypeError:
+                    text_data = await response.text()
+                    print(f"Response {i} (non-JSON): {text_data}")
                 print("-" * 80)
 
 
-asyncio.run(send_requests())
+def main():
+    parser = argparse.ArgumentParser(description="Send test requests to a server.")
+    parser.add_argument("--url", type=str, default="http://localhost:8000/get_form",
+                        help="URL to send POST requests to (default: http://localhost:8000/get_form)")
+
+    args = parser.parse_args()
+
+    asyncio.run(send_requests(args.url))
+
+
+if __name__ == "__main__":
+    main()

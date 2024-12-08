@@ -1,66 +1,125 @@
 import pytest
+from fastapi import Request
+from httpx import QueryParams
+
+from app.db import get_all
 from app.utils import find_best_matching_template
 
-# Мокируем функцию get_all для тестов
+
 @pytest.fixture
 def mock_get_all(mocker):
     templates = [
         {
-            "name": "template_1",
+            "name": "Complete Form",
             "fields": {
-                "name": "string",
-                "age": "integer"
+                "user_email": "email",
+                "user_phone": "phone",
+                "birth_date": "date",
+                "message": "text"
             }
         },
         {
-            "name": "template_2",
+            "name": "Registration Form",
             "fields": {
-                "email": "string",
-                "country": "string"
+                "user_email": "email",
+                "user_phone": "phone",
+                "birth_date": "date"
             }
         },
         {
-            "name": "template_3",
+            "name": "Order Form",
             "fields": {
-                "city": "string"
+                "user_email": "email",
+                "user_phone": "phone"
             }
         }
     ]
 
-    mocker.patch('app.utils.get_all', return_value=templates)
+    mocker.patch('app.db.get_all', return_value=templates)
 
-# Тест на нахождение лучшего совпадения шаблона (асинхронный тест)
+
+# Тест нахождения "Complete Form" при полном совпадении.
 @pytest.mark.asyncio
-async def test_find_matching_template(mock_get_all):
-    params_set = {"name:string", "age:integer"}
-    best_template = await find_best_matching_template(params_set)
+async def test_find_complete_form(mock_get_all):
+    query_params = {
+        "user_email": "test@example.com",
+        "user_phone": "+7 123 456 78 90",
+        "birth_date": "1990-01-01",
+        "message": "Hello, world!"
+    }
 
-    assert best_template is not None
-    assert best_template["name"] == "template_1"
+    # Создаём мокированный запрос
+    request = Request(scope={
+        "type": "http",
+        "method": "POST",
+        "query_string": b"user_email=test@example.com&user_phone=+7+123+456+78+90&birth_date=1990-01-01&message=Hello,+world!",
+        "headers": []
+    })
+    request._query_params = QueryParams(query_params)
+    # Тестируем функцию
+    matched_template = await find_best_matching_template(request)
 
-# Тест на отсутствие подходящих шаблонов
+    assert matched_template is not None
+    assert matched_template.get("name") == "Complete Form"
+
+
+# Тест нахождения "Registration Form", если параметры запроса совпадают с шаблоном.
 @pytest.mark.asyncio
-async def test_no_matching_template(mock_get_all):
-    params_set = {"salary:integer", "position:string"}
-    best_template = await find_best_matching_template(params_set)
+async def test_find_registration_form(mock_get_all):
+    query_params = {
+        "user_email": "test@example.com",
+        "user_phone": "+7 123 456 78 90",
+        "birth_date": "1990-01-01"
+    }
 
-    assert best_template is None
+    request = Request(scope={
+        "type": "http",
+        "method": "GET",
+        "query_string": b"user_email=test@example.com&user_phone=+7+123+456+78+90&birth_date=1990-01-01",
+        "headers": []
+    })
+    request._query_params = QueryParams(query_params)
+    matched_template = await find_best_matching_template(request)
 
-# Тест, где есть несколько совпадений, но нужно выбрать лучшее
+    assert matched_template is not None
+    assert matched_template.get("name") == "Registration Form"
+
+
+# Тест нахождения "Order Form", даже если есть дополнительные поля.
 @pytest.mark.asyncio
-async def test_multiple_matching_templates(mock_get_all):
-    params_set = {"email:string", "country:string"}
-    best_template = await find_best_matching_template(params_set)
+async def test_find_order_form_with_extra_fields(mock_get_all):
+    query_params = {
+        "user_email": "test@example.com",
+        "user_phone": "+7 123 456 78 90",
+        "extra_field": "extra_value"
+    }
 
-    assert best_template is not None
-    assert best_template["name"] == "template_2"
+    request = Request(scope={
+        "type": "http",
+        "method": "GET",
+        "query_string": b"user_email=test@example.com&user_phone=+7+123+456+78+90&extra_field=extra_value",
+        "headers": []
+    })
+    request._query_params = QueryParams(query_params)
+    matched_template = await find_best_matching_template(request)
+    assert matched_template is not None
+    assert matched_template.get("name") == "Order Form"
 
-# Тест, когда нет ни одного шаблона
+
+# Тест, когда недостаточно совпадений для выбора шаблона.
 @pytest.mark.asyncio
-async def test_empty_templates(mocker):
-    mocker.patch('app.utils.get_all', return_value=[])
+async def test_no_matching_form(mock_get_all):
+    query_params = {
+        "unknown_field": "unknown_value"
+    }
 
-    params_set = {"name:string"}
-    best_template = await find_best_matching_template(params_set)
+    request = Request(scope={
+        "type": "http",
+        "method": "GET",
+        "query_string": b"unknown_field=unknown_value",
+        "headers": []
+    })
+    request._query_params = QueryParams(query_params)
+    matched_template = await find_best_matching_template(request)
+    assert matched_template is None
 
-    assert best_template is None
